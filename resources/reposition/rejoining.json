@@ -1,0 +1,83 @@
+{
+	"leave": [
+		{
+			"type": "click",
+			"marker": "exit"
+		},
+		{
+			"type": "wait",
+			"duration": 0.5
+		},
+		{
+			"type": "click",
+			"marker": "main_menu"
+		},
+		{
+			"type": "wait",
+			"duration": 1.5
+		},
+		{
+			"type": "safe_click"
+		}
+	],
+	"join": [
+		{
+			"type": "wait_for",
+			"region": "menu_screen_ocr",
+			"timeout": "menu_screen"
+		},
+		{
+			"type": "wait",
+			"duration": 2.0
+		},
+		{
+			"type": "click",
+			"x": 0.95,
+			"y": 0.95
+		},
+		{
+			"type": "click",
+			"x": 0.95,
+			"y": 0.95
+		},
+		{
+			"type": "wait",
+			"duration": 2.0
+		},
+		{
+			"type": "click",
+			"marker": "private_servers"
+		},
+		{
+			"type": "wait",
+			"duration": 1.5
+		},
+		{
+			"type": "click",
+			"marker": "server_code_box"
+		},
+		{
+			"type": "wait",
+			"duration": 0.5
+		},
+		{
+			"type": "type_code"
+		},
+		{
+			"type": "wait",
+			"duration": 0.1
+		},
+		{
+			"type": "click",
+			"marker": "regular"
+		},
+		{
+			"type": "wait",
+			"duration": 0.1
+		},
+		{
+			"type": "click",
+			"marker": "first_sea"
+		}
+	]
+}

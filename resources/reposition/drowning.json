@@ -1,0 +1,87 @@
+[
+	{
+		"type": "keys",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "space",
+				"down": true
+			},
+			{
+				"dt": 0.2,
+				"key": "space",
+				"down": false
+			},
+			{
+				"dt": 0.1,
+				"key": "space",
+				"down": true
+			},
+			{
+				"dt": 0.7,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 3.5,
+				"key": "space",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.2,
+				"key": "esc",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "esc",
+				"down": false
+			},
+			{
+				"dt": 0.2,
+				"key": "r",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "r",
+				"down": false
+			},
+			{
+				"dt": 0.2,
+				"key": "r",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "r",
+				"down": false
+			},
+			{
+				"dt": 0.2,
+				"key": "enter",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "enter",
+				"down": false
+			},
+			{
+				"dt": 0.2,
+				"key": "enter",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "enter",
+				"down": false
+			}
+		]
+	}
+]

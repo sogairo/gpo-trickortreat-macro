@@ -1,0 +1,396 @@
+[
+	{
+		"type": "keys",
+		"name": "Equip candy bag",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "1",
+				"down": true
+			},
+			{
+				"dt": 0.2,
+				"key": "1",
+				"down": false
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 1",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 5.3,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "w",
+				"down": true
+			},
+			{
+				"dt": 1.5,
+				"key": "w",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 2",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 2.375,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 3",
+		"events": [
+			{
+				"dt": 0,
+				"key": "s",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "s",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 2.33,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "w",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "w",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 4",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 2.435,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 5",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "s",
+				"down": true
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 1.5,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "s",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 6",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "s",
+				"down": true
+			},
+			{
+				"dt": 2.335,
+				"key": "s",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 7",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "d",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "d",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "s",
+				"down": true
+			},
+			{
+				"dt": 2.42,
+				"key": "s",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	},
+	{
+		"type": "keys",
+		"name": "House 8",
+		"events": [
+			{
+				"dt": 0.0,
+				"key": "d",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "d",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "s",
+				"down": true
+			},
+			{
+				"dt": 2.415,
+				"key": "s",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"key": "a",
+				"down": true
+			},
+			{
+				"dt": 0.3,
+				"key": "a",
+				"down": false
+			},
+			{
+				"dt": 0.0,
+				"wait_for": "knock_detection",
+				"timeout": "knock"
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": true
+			},
+			{
+				"dt": 0.1,
+				"key": "e",
+				"down": false
+			},
+			{
+				"dt": 6.5,
+				"wait_for": "knock_detection",
+				"timeout": "knock_confirm"
+			}
+		]
+	}
+]

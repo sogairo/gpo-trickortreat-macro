@@ -1,0 +1,42 @@
+WINDOW_BORDER = '#666666'
+TITLE_BG = '#0f0f0f'
+SIDEBAR_BG = '#1a1a1a'
+GRID_BG = '#161616'
+SLOT_HEADER_BG = '#202020'
+SLOT_HOST_BG = '#0e0e0e'
+SLOT_BORDER = '#2e2e2e'
+SEPARATOR = '#3a3a3a'
+ROW_HOVER_BG = '#262626'
+SLOT_ROW_HOVER_BG = '#2c2c2c'
+TITLE_FG = '#ffffff'
+TITLE_ACTIVE_FG = '#cccccc'
+CATEGORY_FG = '#f2f2f2'
+SUBHEADER_FG = '#777777'
+ITEM_FG = '#aaaaaa'
+ITEM_HOVER_FG = '#ffffff'
+
+TITLE_FONT = ("Arial", 14, "bold")
+BUTTON_FONT = ("Arial", 12, "bold")
+CATEGORY_FONT = ("Arial", 12, "bold")
+SUBHEADER_FONT = ("Arial", 9, "bold")
+ITEM_FONT = ("Arial", 11)
+ITEM_HOVER_FONT = ("Arial", 11, "italic")
+
+OVERLAY_SATURATION = 0.85
+OVERLAY_DARK = 0.5
+OVERLAY_BRIGHT = 1.0
+REGION_LABEL_FG = '#ffffff'
+REGION_ALPHA = 0.6
+
+ENTRY_BG = '#0e0e0e'
+ENTRY_FG = '#ffffff'
+ENTRY_BORDER = '#2e2e2e'
+ENTRY_FOCUS_BORDER = '#555555'
+
+SCROLLBAR_THUMB = '#444444'
+SCROLLBAR_THUMB_HOVER = '#5a5a5a'
+
+ITEM_SELECTED_FG = '#ffffff'
+ITEM_SELECTED_FONT = ("Arial", 11, "bold")
+
+MARKER_ALPHA = 153

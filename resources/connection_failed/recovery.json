@@ -1,0 +1,40 @@
+[
+	{
+		"type": "wait",
+		"duration": 0.5
+	},
+	{
+		"type": "safe_click"
+	},
+	{
+		"type": "wait",
+		"duration": 0.5
+	},
+	{
+		"type": "click",
+		"marker": "cancel"
+	},
+	{
+		"type": "wait",
+		"duration": 5
+	},
+	{
+		"type": "safe_click"
+	},
+	{
+		"type": "wait",
+		"duration": 0.5
+	},
+	{
+		"type": "click",
+		"marker": "play"
+	},
+	{
+		"type": "wait",
+		"duration": 0.5
+	},
+	{
+		"type": "click",
+		"marker": "play"
+	}
+]
