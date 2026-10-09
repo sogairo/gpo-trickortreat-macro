@@ -147,7 +147,7 @@ MARKERS = {
 		"default": {"x": 0.34777070063694265, "y": 0.1970649895178197},
 	},
 	"private_servers": {
-		"label": "Private Servers",
+		"label": "Private Server",
 		"category": "Menu Screen",
 		"default": {"x": 0.7528662420382166, "y": 0.639412997903564},
 	},
