@@ -1,3 +1,7 @@
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 APP_NAME = "GPO Trick-or-treat Macro"
 
 DOCK = {
@@ -19,10 +23,10 @@ LOG = {
 }
 
 FILES = {
-	"config": "config.json",
-	"steps": "resources/steps.json",
-	"reposition_dir": "resources/reposition",
-	"connection_failed": "resources/connection_failed/recovery.json",
+	"config": os.path.join(ROOT, "config.json"),
+	"steps": os.path.join(ROOT, "resources", "steps.json"),
+	"reposition_dir": os.path.join(ROOT, "resources", "reposition"),
+	"connection_failed": os.path.join(ROOT, "resources", "connection_failed", "recovery.json"),
 }
 
 SERVER_CODE = {
@@ -147,7 +151,7 @@ MARKERS = {
 		"default": {"x": 0.34777070063694265, "y": 0.1970649895178197},
 	},
 	"private_servers": {
-		"label": "Private Server",
+		"label": "Private Servers",
 		"category": "Menu Screen",
 		"default": {"x": 0.7528662420382166, "y": 0.639412997903564},
 	},
