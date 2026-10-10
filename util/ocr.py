@@ -1,4 +1,6 @@
+import os
 import re
+import time
 import threading
 
 import numpy as np
@@ -9,26 +11,59 @@ _reader = None
 _reader_lock = threading.Lock()
 
 FUZZY_THRESHOLD = 80
+MODEL_DIR = os.path.join(os.path.expanduser("~"), ".EasyOCR", "model")
 
-def get_reader():
+def models_downloaded():
+	return os.path.isdir(MODEL_DIR) and any(name.endswith(".pth") for name in os.listdir(MODEL_DIR))
+
+def get_reader(on_stage=None):
 	global _reader
 	with _reader_lock:
-		if _reader is None:
-			import warnings
-			warnings.filterwarnings("ignore", message=".*pin_memory.*no accelerator.*", category=UserWarning)
-			warnings.filterwarnings("ignore", message=".*quantize_per_tensor.*", category=UserWarning)
-			import easyocr
-			_reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+		if _reader is not None:
+			return _reader
+
+		start = time.perf_counter()
+		last = [start]
+
+		def stage(message):
+			if on_stage is None:
+				return
+			now = time.perf_counter()
+			on_stage(f"{message} ({now - last[0]:.1f}s)")
+			last[0] = now
+
+		import warnings
+		warnings.filterwarnings("ignore", message=".*pin_memory.*no accelerator.*", category=UserWarning)
+		warnings.filterwarnings("ignore", message=".*quantize_per_tensor.*", category=UserWarning)
+
+		first_run = not models_downloaded()
+		if on_stage and first_run:
+			on_stage("OCR models not found, downloading on this first run (may take a minute)")
+
+		import torch
+		stage(f"Loaded PyTorch {torch.__version__}")
+		import easyocr
+		stage("Loaded EasyOCR")
+		reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+		stage("Downloaded and loaded OCR models" if first_run else "Loaded OCR models")
+		reader.readtext(np.full((60, 200, 3), 255, dtype=np.uint8), detail=0)
+		stage("Warmed up OCR")
+
+		_reader = reader
+		if on_stage:
+			on_stage(f"OCR model ready ({time.perf_counter() - start:.1f}s total)")
 		return _reader
 
 def is_ready():
 	return _reader is not None
 
-def preload(on_ready=None):
+def preload(on_stage=None):
 	def load():
-		get_reader()
-		if on_ready:
-			on_ready()
+		try:
+			get_reader(on_stage)
+		except Exception as error:
+			if on_stage:
+				on_stage(f"OCR model failed to load: {error}")
 	threading.Thread(target=load, daemon=True).start()
 
 def read(x1, y1, x2, y2):

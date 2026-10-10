@@ -39,6 +39,7 @@ class Editor:
 		self.items = items
 		self.slots = slots
 		self.client_index = 0
+		self.hidden = False
 		self.on_commit = on_commit
 		self.selected = None
 		self.overlay = None
@@ -151,10 +152,16 @@ class Editor:
 			self.overlay.follow()
 
 	def show(self):
+		if not self.hidden:
+			return
+		self.hidden = False
 		if self.overlay:
 			self.overlay.show()
 
 	def hide(self):
+		if self.hidden:
+			return
+		self.hidden = True
 		if self.overlay:
 			self.overlay.hide()
 

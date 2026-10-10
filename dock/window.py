@@ -87,7 +87,7 @@ class Dock(ChromeMixin):
 		else:
 			self.log(f"{APP_NAME} started, auto-dock off")
 		self.log("Loading OCR model")
-		ocr.preload(lambda: self.from_thread(self.log, "OCR model ready"))
+		ocr.preload(lambda message: self.from_thread(self.log, message))
 		self.bind_hotkeys()
 		self.root.after(PENDING_MS, self.poll_pending)
 		threading.Thread(target=self.wake_loop, daemon=True).start()
@@ -464,8 +464,17 @@ class Dock(ChromeMixin):
 		color = TITLE_FG if docked == DOCK["max_slots"] else ITEM_FG
 		self.dock_panel.detail.config(text=f"{docked} / {DOCK['max_slots']}", fg=color)
 
+	def sync_editor_visibility(self):
+		if not self.editor:
+			return
+		if user32.IsIconic(self.hwnd):
+			self.editor.hide()
+		else:
+			self.editor.show()
+
 	def tick(self):
 		try:
+			self.sync_editor_visibility()
 			self.refresh()
 			self.check_client_sizes()
 		except Exception as error:
