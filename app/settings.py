@@ -119,10 +119,11 @@ HOUSES = {
 }
 
 DROWNING = {
-	"jump_hold": 0.2,
-	"jump_gap": 0.1,
-	"swim_delay": 0.7,
-	"swim": 3.5,
+	"moves": ["d 0.3", "s 1.25", "a 7"],
+	"spam_key": "q",
+	"spam_during": "a",
+	"spam_hold": 0.05,
+	"spam_gap": 0.1,
 	"key_gap": 0.2,
 	"key_hold": 0.1,
 }

@@ -169,12 +169,13 @@ class Macro(RoutePhase, DrowningPhase, RejoinPhase, OptionsPhase, MacroBase):
 	def take_inline_turn(self, client, scripts):
 		if self.sits_out(client):
 			return
-		self.played.add(self.key(client))
-		self.check_once(client)
-		if self.input.stopped or not self.sequence(self.safe_click, client):
-			return
-
 		try:
+			if self.key(client) not in self.played and not self.check_in_game(client):
+				return
+			self.played.add(self.key(client))
+			self.check_once(client)
+			if self.input.stopped or not self.sequence(self.safe_click, client):
+				return
 			self.play(client)
 			if self.input.stopped:
 				return
@@ -276,6 +277,9 @@ class Macro(RoutePhase, DrowningPhase, RejoinPhase, OptionsPhase, MacroBase):
 		houses = list(HOUSES)
 
 		if state["next"] == 0 and not state["pending"]:
+			if self.key(client) not in self.played and not self.check_in_game(client):
+				state["done"] = True
+				return
 			self.played.add(self.key(client))
 			self.check_once(client)
 			if self.input.stopped or not self.sequence(self.safe_click, client):
