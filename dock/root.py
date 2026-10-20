@@ -44,7 +44,7 @@ class Dock(ChromeMixin):
 		self.editor = None
 		self.server_code = load_setting(FILES["config"], "private_server_code", "")
 		self.reposition_by = load_setting(FILES["config"], "reposition_by", DEFAULT_REPOSITION)
-		self.check_settings = bool(load_setting(FILES["config"], "check_settings", False))
+		self.check_settings = bool(load_setting(FILES["config"], "check_settings", True))
 		if self.reposition_by not in REPOSITION:
 			self.reposition_by = DEFAULT_REPOSITION
 		self.keybinds = dict(DEFAULT_KEYBINDS)
