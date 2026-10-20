@@ -89,7 +89,8 @@ REJOIN = {
 	"spam_gap": 0.1,
 	"server_delay": 1.5,
 	"type_delay": 0.5,
-	"click_gap": 0.1,
+	"regular_delay": 0.5,
+	"sea_delay": 0.5,
 	"chat_delay": 1.5,
 	"chat_gap": 0.3,
 }

@@ -24,9 +24,9 @@ class RejoinPhase:
 		self.sleep(REJOIN["type_delay"])
 		if not self.type_code(client):
 			return False
-		self.sleep(REJOIN["click_gap"])
+		self.sleep(REJOIN["regular_delay"])
 		self.click(client, "regular")
-		self.sleep(REJOIN["click_gap"])
+		self.sleep(REJOIN["sea_delay"])
 		self.click(client, "first_sea")
 
 	def close_chat(self, client):
