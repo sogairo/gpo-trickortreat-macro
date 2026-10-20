@@ -43,6 +43,9 @@ Main Game OCR
 Knock Detection
 - Resize this Region such that it covers the word "Knock". Be generous with your sizing.
 
+Chat Button [EXCLUSIVE TO REJOINING]
+- Drag this marker on top of the chat button in the top left of the game
+
 Exit [EXCLUSIVE TO REJOINING]
 - Drag the Marker so it covers the "Exit to" button
 
@@ -53,8 +56,8 @@ Menu Screen OCR [EXCLUSIVE TO REJOINING]
 - Resize this Region such that it covers the bottom centers' "Press any key to continue" text.
   [!] If the text is not covered fully by the Region, it might not detect if you have loaded into the menu
 
-Private Server [EXCLUSIVE TO REJOINING]
-- Drag this marker on top of the "Private Servers" button
+Private Servers [EXCLUSIVE TO REJOINING]
+- Resize this Region such that it covers the "Private Servers" text on the button
 
 Server Code Box [EXCLUSIVE TO REJOINING]
 - Drag this marker on top of the area where you would normally type in the private server code
@@ -67,18 +70,17 @@ First Sea [EXCLUSIVE TO REJOINING]
 - Drag this marker on top of "First Sea" button
   - You need to type in a private server code to get this button to appear after clicking the "Regular" button
 
-Fail Detection [EXCLUSIVE TO REJOINING]
-- You need to cover the "Connection Failed" text in the disconnect message
-  - Good luck getting this one.
-
-Cancel [EXCLUSIVE TO REJOINING]
-- Drag this marker on top of the "Cancel" button on the "Connection Failed" disconnect message
-  - Good luck getting this one too.
-
 Play [EXCLUSIVE TO REJOINING]
 - Drag this marker on top of the play button when leaving the game
   - When you leave the game, you should be on the game's page, not the Roblox home page.
   - If you join the game through the Roblox Client and not the website, then you should find this button
+
+Settings [ONLY WITH AUTO RUN CHECK ON]
+- Drag this marker on top of the settings button inside the menu that opens when you press M
+
+Auto Run [ONLY WITH AUTO RUN CHECK ON]
+- Resize this Region such that it covers the Auto Run toggle
+  - It should show green when Auto Run is on and red when it's off
   ```
 
 </details>
@@ -103,7 +105,7 @@ Choose `Rejoining` if you are running 1 account
 
 ### 3. Configuration
 - Use your candy bag in slot 1 of your backpack and have another item in slot 2.
-- Turn off `auto run` in GPO's settings.
+- Turn off `auto run` in GPO's settings, or turn on `Auto Run Check` under `Check Settings` and the macro will turn it off for you.
 - Make sure to have your camera in a reasonable distance (not too close, not too far)
 
 ### 4. Respawn all of your accounts

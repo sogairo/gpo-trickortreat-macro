@@ -1,10 +1,11 @@
 import time
+import random
 import ctypes
 from ctypes import wintypes
 
 import pydirectinput
 
-from util.win32 import user32
+from util.win32.api import user32
 from util.win32.constants import MOUSEEVENTF_MOVE
 
 pydirectinput.FAILSAFE = False
@@ -18,6 +19,7 @@ MOUSE_BUTTONS = (("left", 0x01), ("right", 0x02))
 class Input:
 	def __init__(self):
 		self.stopped = False
+		self.interrupted = False
 		self.held_keys = set()
 		self.mouse_down = False
 		self.tween_duration = 0.15
@@ -25,10 +27,21 @@ class Input:
 
 	def reset(self):
 		self.stopped = False
+		self.interrupted = False
+
+	@property
+	def halted(self):
+		return self.stopped or self.interrupted
+
+	def interrupt(self):
+		self.interrupted = True
+
+	def resume(self):
+		self.interrupted = False
 
 	def sleep(self, seconds):
 		deadline = time.perf_counter() + seconds
-		while not self.stopped:
+		while not self.halted:
 			remaining = deadline - time.perf_counter()
 			if remaining <= 0:
 				return True
@@ -36,7 +49,7 @@ class Input:
 		return False
 
 	def wait_until(self, target):
-		while not self.stopped:
+		while not self.halted:
 			remaining = target - time.perf_counter()
 			if remaining <= 0:
 				return True
@@ -55,7 +68,7 @@ class Input:
 				if "key" not in event:
 					if on_action:
 						on_action(event)
-					if self.stopped:
+					if self.halted:
 						return False
 					clock = time.perf_counter()
 					continue
@@ -76,7 +89,7 @@ class Input:
 			winmm.timeEndPeriod(1)
 
 	def key_down(self, key):
-		if self.stopped:
+		if self.halted:
 			return False
 		pydirectinput.keyDown(key)
 		self.held_keys.add(key)
@@ -93,10 +106,10 @@ class Input:
 			self.sleep(hold)
 		finally:
 			self.key_up(key)
-		return not self.stopped
+		return not self.halted
 
 	def hold_keys(self, keys, duration):
-		if self.stopped:
+		if self.halted:
 			return False
 		for key in keys:
 			self.key_down(key)
@@ -106,19 +119,22 @@ class Input:
 			for key in keys:
 				self.key_up(key)
 
-	def type_text(self, text, hold=0.03, gap=0.03):
+	def type_text(self, text, hold, gap, pause):
 		for char in text:
-			if self.stopped:
+			if self.halted:
 				return False
+			key = "space" if char == " " else char.lower()
 			if char.isupper():
-				self.key_down("shift")
-				try:
-					self.tap_key(char.lower(), hold=hold)
-				finally:
+				if not self.key_down("shift"):
+					return False
+				self.sleep(random.uniform(*gap))
+			try:
+				self.tap_key(key, hold=random.uniform(*hold))
+			finally:
+				if char.isupper():
 					self.key_up("shift")
-			else:
-				self.tap_key(char, hold=hold)
-			time.sleep(gap)
+			if not self.sleep(random.uniform(*(pause if char == " " else gap))):
+				return False
 		return True
 
 	def ratio_to_screen(self, x_ratio, y_ratio, rect):
@@ -136,7 +152,7 @@ class Input:
 		prev_x, prev_y = sx, sy
 
 		for i in range(1, self.tween_steps + 1):
-			if self.stopped:
+			if self.halted:
 				return
 
 			t = i / self.tween_steps
@@ -159,7 +175,7 @@ class Input:
 		winmm.timeBeginPeriod(1)
 		try:
 			self.tween_to(x, y, duration if duration is not None else self.tween_duration)
-			if self.stopped:
+			if self.halted:
 				return
 			pydirectinput.mouseDown(button="left")
 			self.mouse_down = True
@@ -183,13 +199,13 @@ class Input:
 		return point.x, point.y
 
 	def safe_double_click(self, x, y, glide, hold, gap):
-		if self.stopped:
+		if self.halted:
 			return False
 		winmm.timeBeginPeriod(1)
 		try:
 			self.tween_to(x, y, glide)
 			for click in range(2):
-				if self.stopped:
+				if self.halted:
 					return False
 				pydirectinput.mouseDown(button="left")
 				self.mouse_down = True
@@ -198,7 +214,7 @@ class Input:
 				self.mouse_down = False
 				if click == 0:
 					time.sleep(gap)
-			return not self.stopped
+			return not self.halted
 		finally:
 			winmm.timeEndPeriod(1)
 

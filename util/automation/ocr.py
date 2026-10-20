@@ -1,6 +1,5 @@
 import os
 import re
-import time
 import threading
 
 import numpy as np
@@ -9,6 +8,7 @@ from rapidfuzz import fuzz
 
 _reader = None
 _reader_lock = threading.Lock()
+_read_lock = threading.Lock()
 
 FUZZY_THRESHOLD = 80
 MODEL_DIR = os.path.join(os.path.expanduser("~"), ".EasyOCR", "model")
@@ -22,36 +22,21 @@ def get_reader(on_stage=None):
 		if _reader is not None:
 			return _reader
 
-		start = time.perf_counter()
-		last = [start]
-
-		def stage(message):
-			if on_stage is None:
-				return
-			now = time.perf_counter()
-			on_stage(f"{message} ({now - last[0]:.1f}s)")
-			last[0] = now
-
 		import warnings
 		warnings.filterwarnings("ignore", message=".*pin_memory.*no accelerator.*", category=UserWarning)
 		warnings.filterwarnings("ignore", message=".*quantize_per_tensor.*", category=UserWarning)
 
 		first_run = not models_downloaded()
 		if on_stage and first_run:
-			on_stage("OCR models not found, downloading on this first run (may take a minute)")
+			on_stage("Downloading OCR model, this may take a minute")
 
-		import torch
-		stage(f"Loaded PyTorch {torch.__version__}")
 		import easyocr
-		stage("Loaded EasyOCR")
 		reader = easyocr.Reader(['en'], gpu=False, verbose=False)
-		stage("Downloaded and loaded OCR models" if first_run else "Loaded OCR models")
 		reader.readtext(np.full((60, 200, 3), 255, dtype=np.uint8), detail=0)
-		stage("Warmed up OCR")
 
 		_reader = reader
-		if on_stage:
-			on_stage(f"OCR model ready ({time.perf_counter() - start:.1f}s total)")
+		if on_stage and first_run:
+			on_stage("OCR model downloaded")
 		return _reader
 
 def is_ready():
@@ -68,8 +53,22 @@ def preload(on_stage=None):
 
 def read(x1, y1, x2, y2):
 	img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
-	results = get_reader().readtext(np.array(img), detail=0)
+	reader = get_reader()
+	with _read_lock:
+		results = reader.readtext(np.array(img), detail=0)
 	return " ".join(results)
+
+def locate(x1, y1, x2, y2):
+	img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
+	reader = get_reader()
+	with _read_lock:
+		results = reader.readtext(np.array(img), detail=1)
+	found = []
+	for box, text, confidence in results:
+		xs = [point[0] for point in box]
+		ys = [point[1] for point in box]
+		found.append((text, x1 + round((min(xs) + max(xs)) / 2), y1 + round((min(ys) + max(ys)) / 2)))
+	return found
 
 def words(text):
 	return re.sub(r"[^a-z0-9 ]", " ", text.lower()).split()

@@ -4,7 +4,7 @@ from ctypes import wintypes
 
 from .api import user32, MONITORINFO, WNDENUMPROC
 from .process import process_start_time, forget_exited
-from .constants import GW_OWNER, MONITOR_DEFAULTTONEAREST, VK_MENU, KEYEVENTF_KEYUP, WM_GETTEXTLENGTH, SMTO_ABORTIFHUNG
+from .constants import GW_OWNER, MONITOR_DEFAULTTONEAREST, VK_MENU, KEYEVENTF_KEYUP, WM_GETTEXTLENGTH, SMTO_ABORTIFHUNG, GWLP_HWNDPARENT, GW_HWNDPREV, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE
 
 TITLE_TIMEOUT_MS = 200
 
@@ -71,3 +71,18 @@ def focus_window(hwnd, attempts=3, settle=0.1):
 		user32.BringWindowToTop(hwnd)
 		time.sleep(settle)
 	return is_foreground(hwnd)
+
+def window_handle(window):
+	window.update_idletasks()
+	return user32.GetParent(window.winfo_id()) or window.winfo_id()
+
+def attach(window, owner):
+	window.attributes('-topmost', False)
+	user32.SetWindowLongPtrW(window_handle(window), GWLP_HWNDPARENT, owner)
+
+def place_above(window, target):
+	hwnd = window_handle(window)
+	above = user32.GetWindow(target, GW_HWNDPREV)
+	if above == hwnd:
+		return
+	user32.SetWindowPos(hwnd, above or 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)

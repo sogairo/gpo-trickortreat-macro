@@ -1,6 +1,6 @@
 import ctypes
 
-from app import runtime
+from dock.root import Dock
 
 def set_dpi_awareness():
 	try:
@@ -13,7 +13,7 @@ def set_dpi_awareness():
 
 def main():
 	set_dpi_awareness()
-	runtime.run()
+	Dock().run()
 
 if __name__ == "__main__":
 	main()

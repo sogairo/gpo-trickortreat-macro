@@ -1,24 +1,23 @@
-import os
 import queue
 import threading
 import tkinter as tk
 
 import keyboard
 
-from app.settings import APP_NAME, DOCK, LAYOUT, FILES, SERVER_CODE, REPOSITION, REGIONS, MARKERS, DEFAULT_KEYBINDS
+from app.settings import APP_NAME, DOCK, LAYOUT, FILES, SERVER_CODE, REPOSITION, REGIONS, MARKERS, DEFAULT_KEYBINDS, CONFIG_SETTINGS
 from app.theme import WINDOW_BORDER, SIDEBAR_BG, GRID_BG, SEPARATOR, TITLE_FG, ITEM_FG
-from macro import Macro
-from macro.runner import client_requirement
-from macro.actions import StepContext, load_steps, load_rejoin
-from util import ocr
-from util.config import load_setting, save_setting
-from util.overlay import load_section, save_section, REGION_KEYS, MARKER_KEYS
+from macro.runner import Macro, client_requirement
+from macro.helpers import StepContext
+from util.automation import ocr
+from util.storage import load_setting, save_setting, load_section, save_section, prune_config, REGION_KEYS, MARKER_KEYS
 from util.win32.constants import WM_NULL
-from util.win32 import user32, get_roblox_pids, find_roblox_windows, get_window_pid, get_window_rect, get_work_area
+from util.win32.api import user32
+from util.win32.process import get_roblox_pids
+from util.win32.window import find_roblox_windows, get_window_pid, get_window_rect
 from .chrome import ChromeMixin
 from .editor import Editor
 from .sidebar import Sidebar
-from .widgets import Dropdown
+from .widgets.dropdown import Dropdown
 from .slot import Slot
 
 PENDING_MS = 20
@@ -37,15 +36,15 @@ class Dock(ChromeMixin):
 
 		self.ignored = set()
 		self.full_notified = set()
-		self.min_size = None
-		self.min_width = LAYOUT["min_width"]
-		self.min_height = LAYOUT["min_height"]
+		self.size_warned = set()
+		self.pruned = prune_config(FILES["config"], CONFIG_SETTINGS, {"regions": REGIONS, "markers": MARKERS})
 		self.auto_dock = bool(load_setting(FILES["config"], "auto_dock", True))
 		self.regions = load_section(FILES["config"], "regions", {name: config["default"] for name, config in REGIONS.items()}, REGION_KEYS)
 		self.markers = load_section(FILES["config"], "markers", {name: config["default"] for name, config in MARKERS.items()}, MARKER_KEYS)
 		self.editor = None
 		self.server_code = load_setting(FILES["config"], "private_server_code", "")
 		self.reposition_by = load_setting(FILES["config"], "reposition_by", DEFAULT_REPOSITION)
+		self.check_settings = bool(load_setting(FILES["config"], "check_settings", False))
 		if self.reposition_by not in REPOSITION:
 			self.reposition_by = DEFAULT_REPOSITION
 		self.keybinds = dict(DEFAULT_KEYBINDS)
@@ -55,8 +54,6 @@ class Dock(ChromeMixin):
 		self.start_pending = False
 		self.start_lock = threading.Lock()
 		self.macro = Macro(lambda message, group=None: self.from_thread(self.log, message, group), lambda stopped: self.from_thread(self.on_macro_finished, stopped))
-
-		self.init_chrome()
 
 		self.inner = tk.Frame(self.root, bg=SIDEBAR_BG)
 		self.inner.pack(fill='both', expand=True, padx=2, pady=2)
@@ -76,19 +73,23 @@ class Dock(ChromeMixin):
 		self.root.bind('<Configure>', self.on_root_configure)
 		self.root.bind_all('<Button-1>', self.clear_focus, add='+')
 
-		self.root.minsize(self.min_width, self.min_height)
 		self.root.update_idletasks()
+		width = self.root.winfo_reqwidth()
+		height = self.root.winfo_reqheight()
+		self.root.minsize(width, height)
+		self.root.maxsize(width, height)
 		self.hwnd = user32.GetParent(self.root.winfo_id())
 		self.apply_borderless()
-		self.center(1800, 1100)
+		self.center(width, height)
 
 		if self.auto_dock:
 			self.log(f"{APP_NAME} started, watching for clients")
 		else:
 			self.log(f"{APP_NAME} started, auto-dock off")
-		self.log("Loading OCR model")
 		ocr.preload(lambda message: self.from_thread(self.log, message))
 		self.bind_hotkeys()
+		if self.pruned:
+			self.log("Removed unused entries from config")
 		self.root.after(PENDING_MS, self.poll_pending)
 		threading.Thread(target=self.wake_loop, daemon=True).start()
 		self.root.after(300, self.tick)
@@ -107,6 +108,7 @@ class Dock(ChromeMixin):
 		self.server_section = self.settings_panel.section("Private Server")
 		self.server_section.entry(self.server_code, self.save_server_code, max_length=SERVER_CODE["length"], secret=True)
 		self.server_section.set_visible(is_rejoin(self.reposition_by))
+		self.check_settings_row = self.settings_panel.section("Check Settings").row(self.check_settings_text(), self.toggle_check_settings)
 
 		self.macro_panel = self.sidebar.panel("Macro")
 		self.macro_panel.row("Start", self.start_macro, hint=self.keybinds["start_key"].upper())
@@ -120,10 +122,7 @@ class Dock(ChromeMixin):
 
 	def build_grid(self, parent):
 		self.grid = tk.Frame(parent, bg=GRID_BG, padx=4, pady=4)
-		self.grid.pack(side='left', fill='both', expand=True)
-		for i in range(2):
-			self.grid.rowconfigure(i, weight=1, uniform='slot')
-			self.grid.columnconfigure(i, weight=1, uniform='slot')
+		self.grid.pack(side='left', fill='y')
 
 		self.slots = []
 		for index in range(DOCK["max_slots"]):
@@ -162,12 +161,6 @@ class Dock(ChromeMixin):
 		self.drain_pending()
 		self.root.after(PENDING_MS, self.poll_pending)
 
-	def hotkey_stop(self):
-		if self.macro.stop():
-			self.from_thread(self.log, "Macro stopped")
-		else:
-			self.cancel_queued_start()
-
 	def cancel_queued_start(self):
 		with self.start_lock:
 			if not self.start_pending:
@@ -189,12 +182,25 @@ class Dock(ChromeMixin):
 		except Exception as error:
 			self.log(f"Reposition save error: {error}")
 			return
-		self.log(f"Reposition by {option}")
+		self.log(f"Reposition by: {option}")
+
+	def check_settings_text(self):
+		return f"Auto Run Check: {'On' if self.check_settings else 'Off'}"
+
+	def toggle_check_settings(self):
+		self.check_settings = not self.check_settings
+		self.check_settings_row.set_text(self.check_settings_text())
+		try:
+			save_setting(FILES["config"], "check_settings", self.check_settings)
+		except Exception as error:
+			self.log(f"Auto Run Check save error: {error}")
+			return
+		self.log(f"Auto Run Check {'on' if self.check_settings else 'off'}")
 
 	def bind_hotkeys(self):
 		try:
-			keyboard.on_press_key(self.keybinds["start_key"], lambda event: self.start_macro())
-			keyboard.on_press_key(self.keybinds["stop_key"], lambda event: self.hotkey_stop())
+			keyboard.on_press_key(self.keybinds["start_key"], lambda event: self.from_thread(self.start_macro))
+			keyboard.on_press_key(self.keybinds["stop_key"], lambda event: self.from_thread(self.stop_macro))
 		except Exception as error:
 			self.log(f"Hotkey error: {error}")
 
@@ -247,21 +253,10 @@ class Dock(ChromeMixin):
 		low, high = REPOSITION[self.reposition_by]["clients"]
 		if not low <= count <= high:
 			return f"{self.reposition_by} needs {client_requirement(low, high)} ({count} docked)", None
-		path = os.path.join(FILES["reposition_dir"], REPOSITION[self.reposition_by]["file"])
-		if not os.path.exists(path):
-			return f"No reposition file for {self.reposition_by} yet ({path})", None
-		try:
-			scripts = {"steps": load_steps(FILES["steps"]), "reposition": self.reposition_by, "clients": (low, high), "first_client_only": bool(REPOSITION[self.reposition_by].get("first_client_only")), "stagger_from": REPOSITION[self.reposition_by].get("stagger_from"), "stagger_cooldown": REPOSITION[self.reposition_by].get("stagger_cooldown", 0)}
-			if is_rejoin(self.reposition_by):
-				scripts["leave"], scripts["join"] = load_rejoin(path)
-				scripts["recovery"] = load_steps(FILES["connection_failed"])
-			else:
-				scripts["inline"] = load_steps(path)
-		except Exception as error:
-			return f"Could not load steps: {error}", None
+		scripts = {"reposition": self.reposition_by, "rejoin": is_rejoin(self.reposition_by), "check_settings": self.check_settings, "clients": (low, high), "first_client_only": bool(REPOSITION[self.reposition_by].get("first_client_only")), "stagger_from": REPOSITION[self.reposition_by].get("stagger_from"), "stagger_cooldown": REPOSITION[self.reposition_by].get("stagger_cooldown", 0)}
 		ocr_texts = {key: config.get("ocr_text", "") for key, config in REGIONS.items()}
 		for key, config in REGIONS.items():
-			if not ocr_texts[key]:
+			if "check" not in config and not ocr_texts[key]:
 				return f"Set ocr_text for {config['label']} in settings.py before starting", None
 		ctx = StepContext(lambda message, group=None: self.from_thread(self.log, message, group), dict(self.markers), dict(self.regions), ocr_texts, self.server_code)
 		return None, (scripts, ctx)
@@ -321,6 +316,8 @@ class Dock(ChromeMixin):
 		items = []
 		for kind, configs, values in (("region", REGIONS, self.regions), ("marker", MARKERS, self.markers)):
 			for key, config in configs.items():
+				if not self.editor_shown(config):
+					continue
 				items.append({
 					"kind": kind,
 					"key": key,
@@ -330,8 +327,23 @@ class Dock(ChromeMixin):
 				})
 		return items
 
-	def open_editor(self):
+	def editor_shown(self, config):
+		if config.get("check_settings"):
+			return self.check_settings
+		if config.get("rejoin"):
+			return is_rejoin(self.reposition_by)
+		return True
+
+	def can_edit(self):
 		if self.editor:
+			return False
+		if self.macro.running:
+			self.log("Stop the macro before editing")
+			return False
+		return True
+
+	def open_editor(self):
+		if not self.can_edit():
 			return
 		self.editor = Editor(self.root, self.sidebar, self.editor_items(), self.slots, self.commit_editor_item, self.close_editor)
 
@@ -369,49 +381,16 @@ class Dock(ChromeMixin):
 				return slot
 		return None
 
-	def smallest_host(self):
-		sizes = [slot.host_rect() for slot in self.slots]
-		return min(size[2] for size in sizes), min(size[3] for size in sizes)
-
 	def check_client_sizes(self):
+		self.size_warned = {hwnd for hwnd in self.size_warned if user32.IsWindow(hwnd)}
 		for slot in self.slots:
-			if not slot.hwnd:
+			if not slot.hwnd or slot.hwnd in self.size_warned:
 				continue
 			x, y, w, h = get_window_rect(slot.hwnd)
 			hx, hy, hw, hh = slot.host_rect()
 			if w > hw + 1 or h > hh + 1:
-				self.update_min_size(w, h)
-
-	def update_min_size(self, w, h):
-		old_w, old_h = self.min_size or (0, 0)
-		w = max(w, old_w)
-		h = max(h, old_h)
-		if (w, h) == (old_w, old_h):
-			return
-		self.min_size = (w, h)
-
-		self.root.update_idletasks()
-		wx, wy, ww, wh = get_window_rect(self.hwnd)
-		host_w, host_h = self.smallest_host()
-		self.min_width = max(LAYOUT["min_width"], ww + 2 * (w - host_w) + 2)
-		self.min_height = max(LAYOUT["min_height"], wh + 2 * (h - host_h) + 2)
-		self.root.minsize(self.min_width, self.min_height)
-
-		if ww >= self.min_width and wh >= self.min_height:
-			self.log(f"Roblox minimum size is {w}x{h}")
-			return
-		ax, ay, aw, ah = get_work_area(self.hwnd)
-		if self.maximized or self.min_width > aw or self.min_height > ah:
-			self.log(f"Roblox minimum size is {w}x{h}, screen too small for 4 clients")
-			return
-		new_w = max(ww, self.min_width)
-		new_h = max(wh, self.min_height)
-		new_x = max(ax, min(wx, ax + aw - new_w))
-		new_y = max(ay, min(wy, ay + ah - new_h))
-		self.set_window_rect(new_x, new_y, new_w, new_h)
-		self.root.update_idletasks()
-		self.fit_all()
-		self.log(f"Roblox minimum size is {w}x{h}, dock expanded to fit")
+				self.size_warned.add(slot.hwnd)
+				self.log(f"Roblox won't shrink below {w}x{h}, bigger than the {hw}x{hh} slot", slot.name)
 
 	def dock_into(self, slot, hwnd):
 		slot.dock(hwnd)
@@ -450,7 +429,7 @@ class Dock(ChromeMixin):
 			if slot is None:
 				if hwnd not in self.full_notified:
 					self.full_notified.add(hwnd)
-					self.log("Grid full, client left undocked")
+					self.log("Dock full, client left undocked")
 				continue
 			self.dock_into(slot, hwnd)
 			docked_pids.add(pid)
@@ -471,6 +450,7 @@ class Dock(ChromeMixin):
 			self.editor.hide()
 		else:
 			self.editor.show()
+			self.editor.stack()
 
 	def tick(self):
 		try:

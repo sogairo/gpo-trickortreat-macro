@@ -2,7 +2,8 @@ import tkinter as tk
 
 from PIL import Image, ImageChops, ImageDraw
 
-from util.win32 import user32, apply_layered_image
+from util.win32.api import user32
+from util.win32.layered import apply_layered_image
 from .coords import point_to_pixels, point_to_percent
 
 MARKER_DIAMETER = 40

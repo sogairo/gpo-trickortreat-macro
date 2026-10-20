@@ -3,7 +3,7 @@ import tkinter as tk
 
 from app.settings import LOG
 from app.theme import SIDEBAR_BG, SUBHEADER_FG, SUBHEADER_FONT, ITEM_FG, ITEM_FONT
-from .widgets import ThinScrollbar
+from .scroll import ThinScrollbar
 
 class LogPanel:
 	def __init__(self, parent):

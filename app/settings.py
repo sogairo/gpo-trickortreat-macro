@@ -14,8 +14,8 @@ DOCK = {
 LAYOUT = {
 	"sidebar_width": 200,
 	"slot_pad": 3,
-	"min_width": 800,
-	"min_height": 500,
+	"client_width": 784,
+	"client_height": 441,
 }
 
 LOG = {
@@ -24,9 +24,6 @@ LOG = {
 
 FILES = {
 	"config": os.path.join(ROOT, "config.json"),
-	"steps": os.path.join(ROOT, "resources", "steps.json"),
-	"reposition_dir": os.path.join(ROOT, "resources", "reposition"),
-	"connection_failed": os.path.join(ROOT, "resources", "connection_failed", "recovery.json"),
 }
 
 SERVER_CODE = {
@@ -43,8 +40,9 @@ TIMEOUTS = {
 
 KEYBOARD = {
 	"press_hold": 0.1,
-	"type_code_hold": 0.03,
-	"type_code_gap": 0.03,
+	"type_hold": (0.05, 0.09),
+	"type_gap": (0.08, 0.14),
+	"word_pause": (0.15, 0.25),
 }
 
 MOUSE = {
@@ -62,6 +60,70 @@ SAFE_CLICK = {
 
 RECOVERY = {
 	"retries": 5,
+	"gap": 0.5,
+	"button_delay": 5,
+}
+
+CHECK_SETTINGS = {
+	"key": "m",
+	"menu_delay": 0.5,
+	"tab_delay": 0.5,
+	"recheck_delay": 0.5,
+	"min_brightness": 50,
+	"dominance": 1.3,
+	"min_green": 0.02,
+}
+
+DISCONNECT = {
+	"area": (0.245, 0.22, 0.755, 0.78),
+	"watch_interval": 1.0,
+	"prompts": {
+		"disconnected": "leave",
+		"connection failed": "cancel",
+	},
+}
+
+REJOIN = {
+	"exit_gap": 0.5,
+	"menu_delay": 1.5,
+	"spam_gap": 0.1,
+	"server_delay": 1.5,
+	"type_delay": 0.5,
+	"click_gap": 0.1,
+	"chat_delay": 1.5,
+	"chat_gap": 0.3,
+}
+
+EQUIP = {
+	"key": "1",
+	"hold": 0.2,
+}
+
+KNOCK = {
+	"key": "e",
+	"delay": 0.1,
+	"hold": 0.1,
+	"confirm_delay": 6.5,
+}
+
+HOUSES = {
+	"House 1": ["a 5.3", "w 1.5"],
+	"House 2": ["a 2.375"],
+	"House 3": ["s 0.3", "a 2.33", "w 0.3"],
+	"House 4": ["a 2.435"],
+	"House 5": ["s+a 1.5", "a 0.1"],
+	"House 6": ["s 2.335"],
+	"House 7": ["d 0.3", "s 2.42", "a 0.3"],
+	"House 8": ["d 0.3", "s 2.415", "a 0.3"],
+}
+
+DROWNING = {
+	"jump_hold": 0.2,
+	"jump_gap": 0.1,
+	"swim_delay": 0.7,
+	"swim": 3.5,
+	"key_gap": 0.2,
+	"key_hold": 0.1,
 }
 
 ANTI_MACRO = {
@@ -83,7 +145,6 @@ OCR = {
 
 REPOSITION = {
 	"Drowning": {
-		"file": "drowning.json",
 		"clients": (2, DOCK["max_slots"]),
 		"default": True,
 		"stagger_from": 3,
@@ -93,7 +154,6 @@ REPOSITION = {
 		},
 	},
 	"Rejoining": {
-		"file": "rejoining.json",
 		"clients": (1, DOCK["max_slots"]),
 		"first_client_only": True,
 		"rejoin": True,
@@ -103,7 +163,10 @@ REPOSITION = {
 MAIN_GAME_OCR = "main_game_ocr"
 MENU_SCREEN_OCR = "menu_screen_ocr"
 KNOCK_DETECTION = "knock_detection"
-FAIL_DETECTION = "fail_detection"
+PRIVATE_SERVERS = "private_servers"
+AUTO_RUN = "auto_run"
+
+CONFIG_SETTINGS = ("auto_dock", "private_server_code", "reposition_by", "keybinds", "check_settings")
 
 DEFAULT_KEYBINDS = {
 	"start_key": "f7",
@@ -115,14 +178,28 @@ REGIONS = {
 		"label": "Main Game OCR",
 		"category": "Main Game",
 		"ocr_text": "menu",
-		"safe_click": True,
 		"default": {"x1": 0.0, "y1": 0.9371069182389937, "x2": 0.11337579617834395, "y2": 1.0},
 	},
 	MENU_SCREEN_OCR: {
 		"label": "Menu Screen OCR",
+		"rejoin": True,
 		"category": "Menu Screen",
 		"ocr_text": "press any key to continue",
 		"default": {"x1": 0.33885350318471336, "y1": 0.8679245283018868, "x2": 0.6535031847133758, "y2": 1.0},
+	},
+	PRIVATE_SERVERS: {
+		"label": "Private Servers",
+		"rejoin": True,
+		"category": "Menu Screen",
+		"ocr_text": "private servers/ friend join",
+		"default": {"x1": 0.68, "y1": 0.61, "x2": 0.83, "y2": 0.67},
+	},
+	AUTO_RUN: {
+		"label": "Auto Run",
+		"check_settings": True,
+		"category": "Settings",
+		"check": "green",
+		"default": {"x1": 0.45, "y1": 0.45, "x2": 0.55, "y2": 0.55},
 	},
 	KNOCK_DETECTION: {
 		"label": "Knock Detection",
@@ -131,52 +208,54 @@ REGIONS = {
 		"match": "word",
 		"default": {"x1": 0.2522292993630573, "y1": 0.3857442348008386, "x2": 0.5987261146496815, "y2": 0.6561844863731656},
 	},
-	FAIL_DETECTION: {
-		"label": "Fail Detection",
-		"category": "Disconnect",
-		"ocr_text": "connection failed",
-		"default": {"x1": 0.39363057324840767, "y1": 0.2620545073375262, "x2": 0.6101910828025477, "y2": 0.32914046121593293},
-	},
 }
 
 MARKERS = {
+	"settings_tab": {
+		"label": "Settings",
+		"check_settings": True,
+		"category": "Settings",
+		"default": {"x": 0.5, "y": 0.5},
+	},
+	"chat_button": {
+		"label": "Chat Button",
+		"rejoin": True,
+		"category": "Main Game",
+		"default": {"x": 0.06, "y": 0.035},
+	},
 	"exit": {
 		"label": "Exit",
+		"rejoin": True,
 		"category": "Main Game",
 		"default": {"x": 0.37070063694267513, "y": 0.07127882599580712},
 	},
 	"main_menu": {
 		"label": "Main Menu",
+		"rejoin": True,
 		"category": "Main Game",
 		"default": {"x": 0.34777070063694265, "y": 0.1970649895178197},
 	},
-	"private_servers": {
-		"label": "Private Servers",
-		"category": "Menu Screen",
-		"default": {"x": 0.7528662420382166, "y": 0.639412997903564},
-	},
 	"server_code_box": {
 		"label": "Server Code Box",
+		"rejoin": True,
 		"category": "Menu Screen",
 		"default": {"x": 0.5019108280254777, "y": 0.6163522012578616},
 	},
 	"regular": {
 		"label": "Regular",
+		"rejoin": True,
 		"category": "Menu Screen",
 		"default": {"x": 0.39363057324840767, "y": 0.5178197064989518},
 	},
 	"first_sea": {
 		"label": "First Sea",
+		"rejoin": True,
 		"category": "Menu Screen",
 		"default": {"x": 0.42165605095541403, "y": 0.519916142557652},
 	},
-	"cancel": {
-		"label": "Cancel",
-		"category": "Disconnect",
-		"default": {"x": 0.378343949044586, "y": 0.6834381551362684},
-	},
 	"play": {
 		"label": "Play",
+		"rejoin": True,
 		"category": "Disconnect",
 		"default": {"x": 0.5515923566878981, "y": 0.5345911949685535},
 	},

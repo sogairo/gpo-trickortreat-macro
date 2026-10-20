@@ -2,7 +2,7 @@ import tkinter as tk
 
 from app.settings import LAYOUT
 from app.theme import GRID_BG
-from .panel import Panel
+from .widgets.panel import Panel
 
 class Sidebar:
 	def __init__(self, parent):

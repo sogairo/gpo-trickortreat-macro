@@ -1,10 +1,11 @@
 import tkinter as tk
 
 from app.theme import SLOT_HOST_BG, SLOT_BORDER, SLOT_HEADER_BG, SLOT_ROW_HOVER_BG, SUBHEADER_FG, SUBHEADER_FONT, ITEM_FG, ITEM_FONT, CATEGORY_FONT
-from app.settings import FOCUS
-from util.win32 import user32, get_window_pid, get_window_rect, focus_window, is_foreground
+from app.settings import FOCUS, LAYOUT
+from util.win32.api import user32
+from util.win32.window import get_window_pid, get_window_rect, focus_window, is_foreground
 from util.win32.constants import GWL_STYLE, GWLP_HWNDPARENT, GW_HWNDPREV, SW_RESTORE, WS_POPUP, STRIP_STYLES, SWP_NOSIZE, SWP_NOMOVE, SWP_NOZORDER, SWP_NOACTIVATE, SWP_FRAMECHANGED, SWP_SHOWWINDOW, SWP_ASYNCWINDOWPOS
-from .widgets import HoverRow
+from .widgets.rows import HoverRow
 
 class Slot:
 	def __init__(self, parent_dock, index, parent):
@@ -28,8 +29,9 @@ class Slot:
 
 		tk.Frame(self.container, bg=SLOT_BORDER, height=1).pack(fill='x')
 
-		self.host = tk.Frame(self.container, bg=SLOT_HOST_BG)
-		self.host.pack(fill='both', expand=True)
+		self.host = tk.Frame(self.container, bg=SLOT_HOST_BG, width=LAYOUT["client_width"], height=LAYOUT["client_height"])
+		self.host.pack()
+		self.host.pack_propagate(False)
 		self.placeholder = tk.Label(self.host, text="EMPTY", bg=SLOT_HOST_BG, fg=SUBHEADER_FG, font=CATEGORY_FONT)
 		self.host.bind('<Configure>', self.on_resize)
 

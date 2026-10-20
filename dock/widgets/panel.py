@@ -3,7 +3,8 @@ import tkinter as tk
 from app.settings import LAYOUT
 from app.theme import SIDEBAR_BG, SLOT_HEADER_BG, SLOT_BORDER, ROW_HOVER_BG, SUBHEADER_FG, SUBHEADER_FONT, ITEM_FG, ITEM_FONT, ENTRY_BG, ENTRY_FG, ENTRY_BORDER, ENTRY_FOCUS_BORDER
 from .log import LogPanel
-from .widgets import HoverRow, Dropdown, ENTRY_PAD
+from .rows import HoverRow
+from .dropdown import Dropdown, ENTRY_PAD
 
 SECTION_GAP = 10
 MASK_CHAR = "X"
@@ -62,6 +63,11 @@ class Section:
 		dropdown = Dropdown(self.frame, options, value, on_select)
 		dropdown.frame.pack(fill='x')
 		return dropdown
+
+	def row(self, text, command, hint=None):
+		row = HoverRow(self.frame, text, command, SIDEBAR_BG, ROW_HOVER_BG, hint=hint)
+		row.widget.pack(fill='x')
+		return row
 
 	def set_visible(self, visible):
 		if visible != self.visible:
