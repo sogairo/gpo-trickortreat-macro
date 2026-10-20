@@ -13,7 +13,7 @@ from util.storage import load_setting, save_setting, load_section, save_section,
 from util.win32.constants import WM_NULL
 from util.win32.api import user32
 from util.win32.process import get_roblox_pids
-from util.win32.window import find_roblox_windows, get_window_pid, get_window_rect
+from util.win32.window import find_roblox_windows, get_window_pid, get_window_rect, rescue_orphans, restore_tagged, on_console_close
 from .chrome import ChromeMixin
 from .editor import Editor
 from .sidebar import Sidebar
@@ -22,6 +22,9 @@ from .slot import Slot
 
 PENDING_MS = 20
 DEFAULT_REPOSITION = next((name for name, config in REPOSITION.items() if config.get("default")), next(iter(REPOSITION)))
+
+def join_names(names):
+	return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 def is_rejoin(option):
 	return bool(REPOSITION[option].get("rejoin"))
@@ -92,6 +95,8 @@ class Dock(ChromeMixin):
 			self.log("Removed unused entries from config")
 		self.root.after(PENDING_MS, self.poll_pending)
 		threading.Thread(target=self.wake_loop, daemon=True).start()
+		self.restore_leftovers()
+		self.console_handler = on_console_close(self.restore_all)
 		self.root.after(300, self.tick)
 
 	def build_sidebar(self, parent):
@@ -396,6 +401,20 @@ class Dock(ChromeMixin):
 		slot.dock(hwnd)
 		self.log(f"Docked {slot.name} (PID {slot.pid})")
 
+	def restore_leftovers(self):
+		pids = get_roblox_pids(DOCK["roblox_exe"])
+		restored, failed = restore_tagged(pids)
+		restored += len(rescue_orphans(pids))
+		if restored:
+			self.log(f"Restored {restored} Roblox window{'' if restored == 1 else 's'} left docked by a previous session")
+		if failed:
+			self.log(f"Couldn't restore {failed} Roblox window{'' if failed == 1 else 's'} left docked by a previous session, reopen the macro to try again")
+
+	def restore_all(self):
+		for slot in self.slots:
+			slot.restore()
+		restore_tagged(get_roblox_pids(DOCK["roblox_exe"]))
+
 	def refresh(self, force=False):
 		dock_new = self.auto_dock or force
 		pids = get_roblox_pids(DOCK["roblox_exe"])
@@ -463,18 +482,24 @@ class Dock(ChromeMixin):
 
 	def undock_slot(self, slot):
 		name = slot.name
-		hwnd = slot.undock()
+		hwnd, restored = slot.undock()
 		if hwnd:
 			self.ignored.add(hwnd)
-			self.log(f"Undocked {name}")
+			self.log(f"Undocked {name}" if restored else f"Couldn't fully undock {name}, it'll be fixed next time the macro opens")
 		self.refresh()
 
 	def undock_all(self):
+		failed = []
 		for slot in self.slots:
-			hwnd = slot.undock()
+			hwnd, restored = slot.undock()
 			if hwnd:
 				self.ignored.add(hwnd)
-		self.log("Undocked all clients")
+				if not restored:
+					failed.append(slot.name)
+		if failed:
+			self.log(f"Couldn't fully undock {join_names(failed)}, they'll be fixed next time the macro opens")
+		else:
+			self.log("Undocked all clients")
 		self.refresh()
 
 	def dock_all(self):
@@ -499,13 +524,24 @@ class Dock(ChromeMixin):
 	def on_close(self):
 		print("Closing. Undocking all clients first.")
 		self.macro.stop()
-		try:
-			keyboard.unhook_all()
-		except Exception:
-			pass
-		self.close_editor()
 		for slot in self.slots:
-			slot.undock()
+			try:
+				hwnd, restored = slot.undock()
+				if not restored:
+					print(f"Couldn't fully undock {slot.name}, it'll be fixed next time the macro opens")
+			except Exception as error:
+				print(f"Couldn't undock {slot.name}: {error}")
+		try:
+			restored, failed = restore_tagged(get_roblox_pids(DOCK["roblox_exe"]))
+			if failed:
+				print(f"Couldn't restore {failed} tagged Roblox window{'' if failed == 1 else 's'}, they'll be fixed next time the macro opens")
+		except Exception as error:
+			print(f"Close sweep error: {error}")
+		for cleanup in (keyboard.unhook_all, self.close_editor):
+			try:
+				cleanup()
+			except Exception as error:
+				print(f"Close error: {error}")
 		self.root.destroy()
 
 	def run(self):

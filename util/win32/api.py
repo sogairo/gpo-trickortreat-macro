@@ -136,6 +136,16 @@ gdi32.DeleteObject.restype = wintypes.BOOL
 gdi32.DeleteDC.argtypes = [wintypes.HDC]
 gdi32.DeleteDC.restype = wintypes.BOOL
 
+user32.SetPropW.argtypes = [wintypes.HWND, wintypes.LPCWSTR, ctypes.c_ssize_t]
+user32.SetPropW.restype = wintypes.BOOL
+user32.GetPropW.argtypes = [wintypes.HWND, wintypes.LPCWSTR]
+user32.GetPropW.restype = ctypes.c_ssize_t
+user32.RemovePropW.argtypes = [wintypes.HWND, wintypes.LPCWSTR]
+user32.RemovePropW.restype = ctypes.c_ssize_t
+
+CONSOLE_HANDLER = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.DWORD)
+kernel32.SetConsoleCtrlHandler.argtypes = [CONSOLE_HANDLER, wintypes.BOOL]
+kernel32.SetConsoleCtrlHandler.restype = wintypes.BOOL
 kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
 kernel32.OpenProcess.restype = wintypes.HANDLE
 kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.FILETIME), ctypes.POINTER(wintypes.FILETIME), ctypes.POINTER(wintypes.FILETIME), ctypes.POINTER(wintypes.FILETIME)]

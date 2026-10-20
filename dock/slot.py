@@ -3,7 +3,7 @@ import tkinter as tk
 from app.theme import SLOT_HOST_BG, SLOT_BORDER, SLOT_HEADER_BG, SLOT_ROW_HOVER_BG, SUBHEADER_FG, SUBHEADER_FONT, ITEM_FG, ITEM_FONT, CATEGORY_FONT
 from app.settings import FOCUS, LAYOUT
 from util.win32.api import user32
-from util.win32.window import get_window_pid, get_window_rect, focus_window, is_foreground
+from util.win32.window import get_window_pid, get_window_rect, focus_window, is_foreground, live_owner, tag_window, read_tag, undock_window
 from util.win32.constants import GWL_STYLE, GWLP_HWNDPARENT, GW_HWNDPREV, SW_RESTORE, WS_POPUP, STRIP_STYLES, SWP_NOSIZE, SWP_NOMOVE, SWP_NOZORDER, SWP_NOACTIVATE, SWP_FRAMECHANGED, SWP_SHOWWINDOW, SWP_ASYNCWINDOWPOS
 from .widgets.rows import HoverRow
 
@@ -63,9 +63,14 @@ class Slot:
 	def dock(self, hwnd):
 		if user32.IsIconic(hwnd) or user32.IsZoomed(hwnd):
 			user32.ShowWindow(hwnd, SW_RESTORE)
-		self.saved_rect = get_window_rect(hwnd)
-		self.saved_style = user32.GetWindowLongPtrW(hwnd, GWL_STYLE)
-		self.saved_owner = user32.GetWindowLongPtrW(hwnd, GWLP_HWNDPARENT)
+		tag = read_tag(hwnd)
+		if tag is None:
+			self.saved_style = user32.GetWindowLongPtrW(hwnd, GWL_STYLE)
+			self.saved_rect = get_window_rect(hwnd)
+			self.saved_owner = live_owner(user32.GetWindowLongPtrW(hwnd, GWLP_HWNDPARENT))
+			tag_window(hwnd, self.saved_style, self.saved_rect, self.saved_owner)
+		else:
+			self.saved_style, self.saved_rect, self.saved_owner = tag
 		user32.SetWindowLongPtrW(hwnd, GWL_STYLE, (self.saved_style & ~STRIP_STYLES) | WS_POPUP)
 		user32.SetWindowLongPtrW(hwnd, GWLP_HWNDPARENT, self.parent_dock.hwnd)
 		self.hwnd = hwnd
@@ -88,14 +93,14 @@ class Slot:
 	def undock(self):
 		hwnd = self.hwnd
 		if not hwnd:
-			return None
-		if user32.IsWindow(hwnd):
-			user32.SetWindowLongPtrW(hwnd, GWLP_HWNDPARENT, self.saved_owner or 0)
-			user32.SetWindowLongPtrW(hwnd, GWL_STYLE, self.saved_style)
-			x, y, w, h = self.saved_rect
-			user32.SetWindowPos(hwnd, None, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+			return None, True
+		restored = undock_window(hwnd, self.saved_style, self.saved_rect, self.saved_owner)
 		self.reset()
-		return hwnd
+		return hwnd, restored
+
+	def restore(self):
+		if self.hwnd:
+			undock_window(self.hwnd, self.saved_style, self.saved_rect, self.saved_owner)
 
 	def focus(self):
 		return bool(self.hwnd) and focus_window(self.hwnd, attempts=FOCUS["attempts"], settle=FOCUS["retry_delay"])
